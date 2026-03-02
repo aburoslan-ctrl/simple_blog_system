@@ -1,0 +1,12 @@
+{
+    "name": "aburoslan/blog_system",
+    "description": "A blog system with authentification",
+    "autoload": {
+        "psr-4": {
+            "Aburoslan\\BlogSystem\\": "src/"
+        }
+    },
+    "require": {
+        "firebase/php-jwt": "^7.0"
+    }
+}
