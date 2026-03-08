@@ -12,13 +12,32 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
         respondBadRequest("Email and password are required.");
     } else {
 
-        $stmt = $connect->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
-        $stmt->bind_param("ss", $email, $password);
+        $stmt = $connect->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $user        = $result->fetch_assoc();
+            $isValidPassword = false;
+
+            if (password_verify($password, $user['password'])) {
+                $isValidPassword = true;
+            } elseif ($password === $user['password']) {
+                // Backward compatibility for old plain-text passwords.
+                $isValidPassword = true;
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                if ($newHash !== false) {
+                    $update = $connect->prepare("UPDATE users SET password = ? WHERE id = ?");
+                    $update->bind_param("si", $newHash, $user['id']);
+                    $update->execute();
+                }
+            }
+
+            if (!$isValidPassword) {
+                respondBadRequest("Invalid email or password.");
+            }
+
             $accessToken = getTokenToSendAPI($user['id']);
 
             respondOK([

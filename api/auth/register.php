@@ -26,10 +26,14 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
         if ($check->get_result()->num_rows > 0) {
             respondBadRequest("Email or username already taken.");
         } else {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            if ($passwordHash === false) {
+                respondBadRequest("Unable to process password.");
+            }
 
             $role   = "user";
             $insert = $connect->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())");
-            $insert->bind_param("ssss", $username, $email, $password, $role);
+            $insert->bind_param("ssss", $username, $email, $passwordHash, $role);
 
             if ($insert->execute()) {
             
