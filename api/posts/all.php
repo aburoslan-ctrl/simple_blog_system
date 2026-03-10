@@ -7,51 +7,45 @@ include "../../head.php";
 $datasentin = ValidateAPITokenSentIN();
 $user_id = $datasentin->usertoken;
 
-// Validate user ID
 if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
     respondUnauthorized();
+    exit;
 }
 $user_id = (int)$user_id;
 
+// Fetch all posts with full table columns
 $stmt = $connect->prepare("
     SELECT 
-        s.id,
-        s.admission_no,
-        s.first_name,
-        s.last_name,
-        s.gender,
-        c.class_name
-    FROM students s
-    JOIN classes c ON s.class_id = c.id
-    ORDER BY s.id DESC
+        p.id,
+        p.user_id,
+        p.title,
+        p.slug,
+        p.content,
+        p.image,
+        p.status,
+        p.created_at,
+        p.updated_at,
+        u.username AS author
+    FROM posts p
+    JOIN users u ON u.id = p.user_id
+    ORDER BY p.updated_at DESC
 ");
 
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Process results
-if ($result->num_rows > 0) {
-
-    $students = [];
-
-    while ($row = $result->fetch_assoc()) {
-        $students[] = $row;
-    }
-
-    respondOK([
-        "students" => $students,
-        "total"    => count($students)
-    ], "Students fetched successfully.");
-
-} else {
-
-    respondOK([
-        "students" => [],
-        "total"    => 0
-    ], "No students found.");
-
+$posts = [];
+while ($row = $result->fetch_assoc()) {
+    $posts[] = $row;
 }
 
-// Close statement
+respondOK(
+    [
+        "posts" => $posts,
+        "total" => count($posts)
+    ],
+    "Posts fetched successfully."
+);
+
 $stmt->close();
 ?>
