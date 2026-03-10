@@ -3,17 +3,18 @@ $method = "GET";
 $cache  = "no-cache";
 include "../../head.php";
 
-// Validate token once
+/* VALIDATE TOKEN */
 $datasentin = ValidateAPITokenSentIN();
 $user_id = $datasentin->usertoken;
 
+/* VALIDATE USER ID */
 if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
-    respondUnauthorized();
-    exit;
+    respondUnauthorized("Unauthorized access.");
 }
+
 $user_id = (int)$user_id;
 
-// Fetch all posts with full table columns
+/* PREPARE QUERY */
 $stmt = $connect->prepare("
     SELECT 
         p.id,
@@ -24,28 +25,41 @@ $stmt = $connect->prepare("
         p.image,
         p.status,
         p.created_at,
-        p.updated_at,
-        u.username AS author
+        p.updated_at
     FROM posts p
-    JOIN users u ON u.id = p.user_id
-    ORDER BY p.updated_at DESC
+    ORDER BY p.id DESC
 ");
 
+if (!$stmt) {
+    respondBadRequest("Failed to prepare query.");
+}
+
+/* EXECUTE QUERY */
 $stmt->execute();
 $result = $stmt->get_result();
 
-$posts = [];
-while ($row = $result->fetch_assoc()) {
-    $posts[] = $row;
-}
+/* PROCESS RESULTS */
+if ($result->num_rows > 0) {
 
-respondOK(
-    [
+    $posts = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $posts[] = $row;
+    }
+
+    respondOK([
         "posts" => $posts,
         "total" => count($posts)
-    ],
-    "Posts fetched successfully."
-);
+    ], "Posts fetched successfully.");
 
+} else {
+
+    respondOK([
+        "posts" => [],
+        "total" => 0
+    ], "No posts found.");
+}
+
+/* CLOSE STATEMENT */
 $stmt->close();
 ?>
