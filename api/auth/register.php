@@ -3,17 +3,18 @@ $method = "POST";
 $cache  = "no-cache";
 include "../../head.php";
 
-if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['password'])) {
+if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['password']) && isset($_POST['role'])) {
 
     $username = cleanme($_POST['username']);
     $email    = cleanme($_POST['email']);
     $password = cleanme($_POST['password']);
+    $role     = cleanme($_POST['role']);
     
     $datasentin=ValidateAPITokenSentIN();
     $user_id=$datasentin->usertoken;
 
-    if (input_is_invalid($username) || input_is_invalid($email) || input_is_invalid($password)) {
-        respondBadRequest("Username, email, and password are required.");
+    if (input_is_invalid($username) || input_is_invalid($email) || input_is_invalid($password) || input_is_invalid($role)) {
+        respondBadRequest("Username, email, password, and role are required.");
     } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         respondBadRequest("Invalid email format.");
     } else {
@@ -31,7 +32,7 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
                 respondBadRequest("Unable to process password.");
             }
 
-            $role   = "user";
+            
             $insert = $connect->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())");
             $insert->bind_param("ssss", $username, $email, $passwordHash, $role);
 
