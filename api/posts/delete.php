@@ -38,10 +38,10 @@ if (isset($_POST['id'])) {
     $post = $result->fetch_assoc();
 
     // Authorization (author or admin only)
-    // if ($post['user_id'] != $user->usertoken && $user->role != "admin") {
-    //     respondUnauthorized("You are not authorized to delete this post.");
-    //     exit;
-    // }
+    if ($post['user_id'] != $user->usertoken && $user->role != "admin") {
+        respondUnauthorized("You are not authorized to delete this post.");
+        exit;
+    }
 
     // Delete related data first
     $deletePostCategories = $connect->prepare("DELETE FROM post_categories WHERE post_id = ?");

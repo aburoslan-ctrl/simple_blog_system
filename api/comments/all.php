@@ -28,7 +28,7 @@ $checkPost->execute();
 $checkResult = $checkPost->get_result();
 
 if ($checkResult->num_rows === 0) {
-    respondBadRequest("Post not found.");
+    respondBadRequest("Blog post not found.");
 }
 
 // Fetch comments

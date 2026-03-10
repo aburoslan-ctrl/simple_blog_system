@@ -39,10 +39,10 @@ if (isset($_POST['id'])) {
     $post = $result->fetch_assoc();
 
     // Authorization (author or admin only)
-   // if ($post['user_id'] != $user->usertoken && $user->role != "admin") {
-     //   respondUnauthorized("You are not authorized to update this post.");
-      //  exit;
-   // }
+   if ($post['user_id'] != $user->usertoken && $user->role != "admin") {
+       respondUnauthorized("You are not authorized to update this post.");
+       exit;
+   }
 
     // Fetch current post data
     $getCurrent = $connect->prepare("SELECT title, content FROM posts WHERE id = ?");
@@ -56,6 +56,18 @@ if (isset($_POST['id'])) {
     if (input_is_invalid($title) || input_is_invalid($content)) {
         respondBadRequest("Title and content cannot be empty.");
         exit;
+    } elseif (strlen($title) < 3) {
+        respondBadRequest("Title is too short.");
+        exit;
+    } elseif (strlen($title) > 255) {
+        respondBadRequest("Title is too long.");
+        exit;
+    } elseif (strlen($content) < 10) {
+        respondBadRequest("Content is too short.");
+        exit;
+    } elseif (strlen($content) > 5000) {
+        respondBadRequest("Content is too long.");
+        exit;   
     }
 
     // Update post

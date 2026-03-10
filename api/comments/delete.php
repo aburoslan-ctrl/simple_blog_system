@@ -23,17 +23,17 @@ if (isset($_POST['id'])) {
         $check->bind_param("i", $comment_id);
         $check->execute();
         $result = $check->get_result();
-
+// this is to check if the comment exists before trying to delete it, and also to fetch the user_id of the comment for authorization check
         if ($result->num_rows === 0) {
             respondBadRequest("Comment not found.");
             exit;
         } 
 
             $comment = $result->fetch_assoc();
-
-            // if ($comment['user_id'] !== $user['id'] && $user['role'] !== 'admin') {
-            //     respondUnauthorized("You are not authorized to delete this comment.");
-            // } else {
+//this is to check if the user is the owner of the comment or an admin before allowing deletion
+            if ($comment['user_id'] != $user_id && $user->role !== 'admin'){
+                respondUnauthorized("You are not authorized to delete this comment.");
+            }else {
 
                 $delete = $connect->prepare("DELETE FROM comments WHERE id = ?");
                 $delete->bind_param("i", $comment_id);
@@ -43,9 +43,11 @@ if (isset($_POST['id'])) {
                 } else {
                     respondBadRequest("Failed to delete comment. Please try again.");
                 }
-            }
+            
         }
 
+    }
+}
 
 else {
     respondBadRequest("Invalid request. Comment ID is required.");

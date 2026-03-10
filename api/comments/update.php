@@ -17,7 +17,12 @@ if (isset($_POST['id']) && isset($_POST['comment'])) {
         respondBadRequest("A valid comment ID is required.");
     } else if (input_is_invalid($content)) {
         respondBadRequest("Comment content cannot be empty.");
-    } else {
+    }   elseif (strlen($content) < 3) {
+    respondBadRequest("Comment is too short.");
+}
+elseif (strlen($content) > 1000) {
+    respondBadRequest("Comment is too long.");
+} else {
 
         $comment_id = (int)$comment_id;
 
