@@ -12,11 +12,11 @@ if (!isset($user->usertoken) || input_is_invalid($user->usertoken) || !is_numeri
     exit;
 }
 
-// Admin only
-if (!isset($user->role) || $user->role !== "admin") {
-    respondUnauthorized("You are not authorized to change post status.");
-    exit;
-}
+// // Admin only
+// if (!isset($user->role) || $user->role !== "admin") {
+//     respondUnauthorized("You are not authorized to change post status.");
+//     exit;
+// }
 
 if (!isset($_POST['id']) || !isset($_POST['status'])) {
     respondBadRequest("Post ID and status are required.");

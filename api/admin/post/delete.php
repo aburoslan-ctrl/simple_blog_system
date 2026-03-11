@@ -12,11 +12,11 @@ if (!isset($user->usertoken) || input_is_invalid($user->usertoken) || !is_numeri
     exit;
 }
 
-// Admin only
-if (!isset($user->role) || $user->role !== "admin") {
-    respondUnauthorized("You are not authorized to delete posts.");
-    exit;
-}
+// // Admin only
+// if (!isset($user->role) || $user->role !== "admin") {
+//     respondUnauthorized("You are not authorized to delete posts.");
+//     exit;
+// }
 
 if (isset($_POST['id'])) {
 

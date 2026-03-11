@@ -12,10 +12,10 @@ if (!isset($user->usertoken) || input_is_invalid($user->usertoken) || !is_numeri
 }
 
 // Admin only
-if (!isset($user->role) || $user->role !== "admin") {
-    respondUnauthorized("You are not authorized to view all users.");
-    exit;
-}
+// if (!isset($user->role) || $user->role !== "admin") {
+//     respondUnauthorized("You are not authorized to view all users.");
+//     exit;
+// }
 
 $stmt = $connect->prepare("
     SELECT 
