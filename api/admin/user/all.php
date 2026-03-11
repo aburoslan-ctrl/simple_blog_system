@@ -5,17 +5,18 @@ include "../../../head.php";
 
 // Validate token once
 $user = ValidateAPITokenSentIN();
+$user_id = $user->usertoken;
 
-if (!isset($user->usertoken) || input_is_invalid($user->usertoken) || !is_numeric($user->usertoken)) {
+if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
     respondUnauthorized();
     exit;
 }
 
 // Admin only
-// if (!isset($user->role) || $user->role !== "admin") {
-//     respondUnauthorized("You are not authorized to view all users.");
-//     exit;
-// }
+if (!isset($user_id) || $user_id !== "admin") {
+    respondUnauthorized("You are not authorized to view all users.");
+    exit;
+}
 
 $stmt = $connect->prepare("
     SELECT 
