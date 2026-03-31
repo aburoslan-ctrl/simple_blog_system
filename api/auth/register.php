@@ -10,8 +10,8 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
     $password = cleanme($_POST['password']);
     $role     = cleanme($_POST['role']);
     
-    $datasentin=ValidateAPITokenSentIN();
-    $user_id=$datasentin->usertoken;
+    //$datasentin=ValidateAPITokenSentIN();
+    //$user_id=$datasentin->usertoken;
 
     if (input_is_invalid($username) || input_is_invalid($email) || input_is_invalid($password) || input_is_invalid($role)) {
         respondBadRequest("Username, email, password, and role are required.");
