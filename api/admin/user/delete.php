@@ -14,10 +14,15 @@ if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
 }
 
 // Admin only
-// if (!isset($user_id) || $user_id !== "admin") {
-//     respondUnauthorized("You are not authorized to delete users.");
-//     exit;
-// }
+$roleCheck = $connect->prepare("SELECT role FROM users WHERE id = ?");
+$roleCheck->bind_param("i", $user_id);
+$roleCheck->execute();
+$roleResult = $roleCheck->get_result()->fetch_assoc();
+
+if (!$roleResult || $roleResult['role'] !== 'admin') {
+    respondForbiddenAuthorized("Admin access required.");
+    exit;
+}
 
 if (isset($_POST['id'])) {
 

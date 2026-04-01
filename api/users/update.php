@@ -35,10 +35,22 @@ if (!$current) {
 // Get updated values or keep current
 $username = isset($_POST['username']) ? cleanme($_POST['username']) : $current['username'];
 $email    = isset($_POST['email'])    ? cleanme($_POST['email'])    : $current['email'];
-$password = isset($_POST['password']) ? cleanme($_POST['password']) : $current['password'];
+
+$passwordChanged = false;
+if (isset($_POST['password']) && !input_is_invalid(cleanme($_POST['password']))) {
+    $rawPassword = cleanme($_POST['password']);
+    if (!validatePassword($rawPassword)) {
+        respondBadRequest("Password must be at least 6 characters with uppercase, lowercase, number and special character.");
+        exit;
+    }
+    $password = password_hash($rawPassword, PASSWORD_DEFAULT);
+    $passwordChanged = true;
+} else {
+    $password = $current['password'];
+}
 
 // Validate inputs
-if (input_is_invalid($username) || input_is_invalid($email) || input_is_invalid($password)) {
+if (input_is_invalid($username) || input_is_invalid($email)) {
     respondBadRequest("Fields cannot be empty.");
     exit;
 }

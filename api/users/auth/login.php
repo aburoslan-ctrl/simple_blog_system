@@ -47,6 +47,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
             respondOK([
                 "access_token" => $accessToken,
                 "user" => [
+                    "id"       => $user['id'],
                     "username" => $user['username'],
                     "email"    => $user['email'],
                     "role"     => $user['role']
