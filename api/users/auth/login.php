@@ -38,6 +38,10 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
                 respondBadRequest("Invalid email or password.");
             }
 
+            if ($user['role'] !== 'user') {
+                respondForbiddenAuthorized("Access denied. This login is for regular users only.");
+            }
+
             $accessToken = getTokenToSendAPI($user['id']);
 
             respondOK([
