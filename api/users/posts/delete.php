@@ -2,7 +2,7 @@
 
 $method = "POST";
 $cache  = "no-cache";
-include "../../head.php";
+include "../../../head.php";
 
 // Validate token once
 $user = ValidateAPITokenSentIN();
@@ -43,10 +43,6 @@ if (isset($_POST['id'])) {
     //     exit;
     // }
 
-    // Delete related data first
-    $deletePostCategories = $connect->prepare("DELETE FROM post_categories WHERE post_id = ?");
-    $deletePostCategories->bind_param("i", $post_id);
-    $deletePostCategories->execute();
 
     $deleteComments = $connect->prepare("DELETE FROM comments WHERE post_id = ?");
     $deleteComments->bind_param("i", $post_id);

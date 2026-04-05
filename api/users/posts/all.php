@@ -1,7 +1,7 @@
 <?php
 $method = "GET";
 $cache  = "no-cache";
-include "../../head.php";
+include "../../../head.php";
 
 /* VALIDATE TOKEN */
 $datasentin = ValidateAPITokenSentIN();

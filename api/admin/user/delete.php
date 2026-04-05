@@ -24,9 +24,9 @@ if (!$roleResult || $roleResult['role'] !== 'admin') {
     exit;
 }
 
-if (isset($_POST['id'])) {
+if (isset($_POST['user_id'])) {
 
-    $user_id = cleanme($_POST['id']);
+    $user_id = cleanme($_POST['user_id']);
 
     if (input_is_invalid($user_id)) {
         respondBadRequest("User ID is required.");

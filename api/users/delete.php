@@ -2,7 +2,7 @@
 
 $method = "POST";
 $cache  = "no-cache";
-include "../head.php";
+include "../../head.php";
 
 // Validate token
 $datasentin = ValidateAPITokenSentIN();

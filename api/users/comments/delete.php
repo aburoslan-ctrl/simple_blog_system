@@ -1,14 +1,14 @@
 <?php
 $method = "POST";
 $cache  = "no-cache";
-include "../../head.php";
+include "../../../head.php";
 
 
 $user = ValidateAPITokenSentIN();
 
-if (isset($_POST['id'])) {
+if (isset($_POST['comment_id'])) {
 
-    $comment_id = cleanme($_POST['id']);
+    $comment_id = cleanme($_POST['comment_id']);
     
     $datasentin=ValidateAPITokenSentIN();
     $user_id=$datasentin->usertoken;

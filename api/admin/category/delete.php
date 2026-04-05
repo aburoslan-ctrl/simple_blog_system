@@ -48,11 +48,6 @@ if ($check->get_result()->num_rows == 0) {
     exit;
 }
 
-// Remove from post_categories first
-$delLinks = $connect->prepare("DELETE FROM post_categories WHERE category_id = ?");
-$delLinks->bind_param("i", $category_id);
-$delLinks->execute();
-
 // Delete category
 $stmt = $connect->prepare("DELETE FROM categories WHERE id = ?");
 $stmt->bind_param("i", $category_id);

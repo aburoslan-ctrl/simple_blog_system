@@ -1,7 +1,7 @@
 <?php
 $method = "POST";
 $cache  = "no-cache";
-include "../../head.php";
+include "../../../head.php";
 
 $user = ValidateAPITokenSentIN();
 
@@ -19,7 +19,7 @@ if (isset($_POST['id'])) {
         $post_id = (int)$post_id;
 
         // Check if post exists
-        $checkPost = $connect->prepare("SELECT id, user_id, image FROM posts WHERE id = ?");
+        $checkPost = $connect->prepare("SELECT id, user_id FROM posts WHERE id = ?");
         $checkPost->bind_param("i", $post_id);
         $checkPost->execute();
         $result = $checkPost->get_result();
@@ -102,10 +102,10 @@ if (isset($_POST['id'])) {
                     if (isset($_POST['category_ids']) && !empty($_POST['category_ids'])) {
                         $category_ids = $_POST['category_ids'];
 
-                        // Remove old categories
-                        $delCats = $connect->prepare("DELETE FROM post_categories WHERE post_id = ?");
-                        $delCats->bind_param("i", $post_id);
-                        $delCats->execute();
+                        // // Remove old categories
+                        // $delCats = $connect->prepare("DELETE FROM categories WHERE post_id = ?");
+                        // $delCats->bind_param("i", $post_id);
+                        // $delCats->execute();
 
                         // Assign new categories
                         $ids = array_filter(array_map('trim', explode(",", $category_ids)), 'is_numeric');
@@ -117,7 +117,7 @@ if (isset($_POST['id'])) {
                             $chk->execute();
                             if ($chk->get_result()->num_rows === 0) continue; // skip invalid
 
-                            $pc = $connect->prepare("INSERT IGNORE INTO post_categories (post_id, category_id) VALUES (?, ?)");
+                            $pc = $connect->prepare("INSERT IGNORE INTO categories (post_id, category_id) VALUES (?, ?)");
                             $pc->bind_param("ii", $post_id, $cat_id);
                             $pc->execute();
                         }
