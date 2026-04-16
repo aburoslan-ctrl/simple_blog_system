@@ -2,31 +2,55 @@
 ob_start();
 require("connectdb.php");
 
-class validator {
-
-    public static function validateEmail($email)
+register_shutdown_function("notify_crash_handler");
+//function to redirect starts here
+function redirect($new_location)
 {
-    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return true;
-    } else {
-        return false;
-    }
+    header("location: " . $new_location);
+    exit;
 }
-
-public static function validatePassword($password)
-{
-    $uppercase = preg_match('@[A-Z]@', $password);
-    $lowercase = preg_match('@[a-z]@', $password);
-    $number = preg_match('@[0-9]@', $password);
-    $specialChars = preg_match('@[^\w]@', $password);
-    if (!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 6) {
-        return false;
-    } else {
-        return true;
+function getCurrentFileFullURL(){
+        $protocol = strtolower(substr($_SERVER["SERVER_PROTOCOL"],0,strpos( $_SERVER["SERVER_PROTOCOL"],'/'))).'://';
+        // Get the server name and port
+        $servername = $_SERVER['SERVER_NAME'];
+        $port = $_SERVER['SERVER_PORT'];
+        // Get the path to the current script
+        $path = $_SERVER['PHP_SELF'];
+        // Combine the above to form the full URL
+        $endpoint = $protocol . $servername . ":" . $port . $path;
+        return $endpoint;
     }
-}
+    function setTimeZoneForUser($timeZoneToUse=''){
+        if(strlen($timeZoneToUse)>2){
+            date_default_timezone_set($timeZoneToUse);
+        }else{
+            date_default_timezone_set("Africa/Lagos");
+        }
+    }
+     function system_notify_crash_handler($message,$from){
+        $botidtouse=$chatId=0;
+  
 
-public static function input_is_invalid($data)
+
+        $errstr  = preg_replace('/[^A-Za-z0-9\-]/', ' ',$message);
+
+        $keyboard= [];
+
+        $response="@habnarm1 \n*WORK FLOW CRASH*\n\nFrom: $from\nText:$errstr";
+
+        replyuser($chatId, "0", $response, false, $keyboard, "markdown", $botidtouse);
+
+ }
+  function get_details_from_exception(Exception $e){
+        $errorMessage = sprintf(
+            "Error: %s in %s on line %d",
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine()
+        );
+        return $errorMessage;
+    }
+function input_is_invalid($data)
     {
         // Check if data is null
         if (is_null($data)) {
@@ -63,7 +87,7 @@ public static function input_is_invalid($data)
             } else {
                 // Handle other object types
                 foreach ($data as $key => $value) {
-                    if (self::input_is_invalid($value)) {
+                    if (input_is_invalid($value)) {
                         return true;
                     }
                 }
@@ -78,149 +102,64 @@ public static function input_is_invalid($data)
         }
     
         return false;
-    } 
-    private $connect;
-    public function __construct($connect)
-    {
-        $this->connect = $connect;
     }
-    public function cleanme($whoclean)
+function cleanme($whoclean)
 {
-    
+    global $connect;
     $whoclean = trim($whoclean);
     $whoclean = strip_tags($whoclean);
-    $whoclean = mysqli_real_escape_string( $this->connect, $whoclean);
+    $whoclean = mysqli_real_escape_string($connect, $whoclean);
     return $whoclean;
 }
-
-}
-class Security{
-    private $connect;
-    public function __construct($connect)
-    {
-        $this->connect = $connect;
-    }
-    public function createUniqueToken($length, $tablename, $tablecolname, $tokentag, $addnumbers, $addcapitalletters, $addsmalllletters)
+function notify_crash_handler()
 {
-    //global $connect;
-    $loopit = true;
-    $input = "";
-    if ($addnumbers) {
-        $numbers = "1234567890";
-        $input = $input . $numbers;
-    }
-    if ($addcapitalletters) {
-        $capitalletters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $input = $input . $capitalletters;
-    }
-    if ($addsmalllletters) {
-        $smallletters = "abcdefghijklmnopqrstuvwxyz";
-        $input = $input . $smallletters;
-    }
-    $strength = $length;
-    $tokenis = StringAll::generate_string($input, $strength);
-    while ($loopit) {
-        // check field
-        $query = "SELECT id FROM $tablename WHERE $tablecolname = ?";
-        $stmt = $this->connect->prepare($query);
-        $stmt->bind_param("s", $tokenis);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $num_row = $result->num_rows;
-        if ($num_row > 0) {
-            $tokenis =StringAll::generate_string($input, $strength);
-        } else {
-            $loopit = false;
+    global $connect;
+    $errfile = "unknown file";
+    $errstr = "shutdown";
+    $errno = E_CORE_ERROR;
+    $errline = 0;
+    $error = error_get_last();
+    if ($error !== NULL) {
+        $adminidis = 0;
+        // https://www.php.net/manual/en/errorfunc.constants.php
+        $errno = $error["type"];
+        if ($errno == 1) {
+            $errno = "Fatal and code has stopped";
+        } else if ($errno == 2) {
+            $errno = "Warning but code did not stop";
         }
-    }
-    return $tokentag . $tokenis;
-}
-    public static function Password_encrypt($user_pass)
-{
-    $BlowFish_Format = "$2y$10$";
-    $salt_len = 24;
-    $salt = self::Get_Salt($salt_len);
-    $the_format = $BlowFish_Format . $salt;
-    $hash_pass = crypt($user_pass, $the_format);
-    return $hash_pass;
-}
-  public static function Get_Salt($size)
-{
-    $Random_string = md5(uniqid(mt_rand(), true));
-    $Base64_String = base64_encode($Random_string);
-    $change_string = str_replace('+', '.', $Base64_String);
-    $salt = substr($change_string, 0, $size);
-    return $salt;
-}
+        $errfile = str_replace("public_html", "", $error["file"]);
+        $errline = $error["line"];
 
-  public static function check_pass($pass, $storedPass)
+        $chatId = "";
+        $botidtouse = "";
+        $keyboard = [];
+        $response = "@habnarm1 \n*CRASH NOTIFICATION*\n\nFile: $errfile\nType:$errno\nLine:$errline\nText:$errstr";
+        replyuser($chatId, "0", $response, true, $keyboard, "markdown", $botidtouse);
+    }
+}
+function validateEmail($email)
 {
-    $Hash = crypt($pass, $storedPass);
-    if ($Hash === $storedPass) {
-        return (true);
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return true;
     } else {
-        return (false);
+        return false;
     }
 }
-  public static  function getIPAddress()
+function weekOfMonth($date)
 {
-    $ipaddress = '';
-    if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-    } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else if (isset($_SERVER['HTTP_X_FORWARDED'])) {
-        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-    } else if (isset($_SERVER['HTTP_FORWARDED_FOR'])) {
-        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-    } else if (isset($_SERVER['HTTP_FORWARDED'])) {
-        $ipaddress = $_SERVER['HTTP_FORWARDED'];
-    } else if (isset($_SERVER['REMOTE_ADDR'])) {
-        $ipaddress = $_SERVER['REMOTE_ADDR'];
-    } else {
-        $ipaddress = 'UNKNOWN';
-    }
-    return $ipaddress;
+    $firstOfMonth = date("Y-m-01", strtotime($date));
+    return (intval(date("W", strtotime($date))) - intval(date("W", strtotime($firstOfMonth)))) + 1;
 }
- public static function getIp()
-{
-    $ipaddress = '';
-    if (getenv('HTTP_CLIENT_IP')) {
-        $ipaddress = getenv('HTTP_CLIENT_IP');
-    } elseif (getenv('HTTP_X_FORWARDED_FOR')) {
-        $ipaddress = getenv('HTTP_X_FORWARDED_FOR');
-    } elseif (getenv('HTTP_X_FORWARDED')) {
-        $ipaddress = getenv('HTTP_X_FORWARDED');
-    } elseif (getenv('HTTP_FORWARDED_FOR')) {
-        $ipaddress = getenv('HTTP_FORWARDED_FOR');
-    } elseif (getenv('HTTP_FORWARDED')) {
-        $ipaddress = getenv('HTTP_FORWARDED');
-    } elseif (getenv('REMOTE_ADDR')) {
-        $ipaddress = getenv('REMOTE_ADDR');
-    } else {
-        $ipaddress = 'UNKNOWN';
-    }
-    return $ipaddress;
-}
-}
-
-class DateTimeHelper{
-    public static   function setTimeZoneForUser($timeZoneToUse=''){
-        if(strlen($timeZoneToUse)>2){
-            date_default_timezone_set($timeZoneToUse);
-        }else{
-            date_default_timezone_set("Africa/Lagos");
-        }
-    }
-    public static function getDatetimethatPasssed($endday)
+function getDatetimethatPasssed($endday)
 {
     $todayis = date("Y-m-d");
-    $earlier = new \DateTime("$endday");
-    $later = new \DateTime("$todayis");
+    $earlier = new DateTime("$endday");
+    $later = new DateTime("$todayis");
     $abs_diff = $later->diff($earlier)->format("%a"); //3
     return $abs_diff;
 }
-public static function getDaysPassed($vendorsubendday)
+function getDaysPassed($vendorsubendday)
 {
     $datediff = time() - $vendorsubendday;
     // $datediff =$vendorsubendday-$vendorsubstartday;//getting total days btw
@@ -231,7 +170,7 @@ public static function getDaysPassed($vendorsubendday)
     $difference = round($datediff / (24 * 60 * 60)); //getting days
     return $difference;
 }
- public static function getMinBetweentimes($latesttime, $oldtime)
+function getMinBetweentimes($latesttime, $oldtime)
 {
     $minbtwis = 0;
     $subtractit = $latesttime - $oldtime;
@@ -242,60 +181,19 @@ public static function getDaysPassed($vendorsubendday)
     //any number by 60 by 60 by 24 is for months
     return $minbtwis;
 }
- public static function weekOfMonth($date)
-{
-    $firstOfMonth = date("Y-m-01", strtotime($date));
-    return (intval(date("W", strtotime($date))) - intval(date("W", strtotime($firstOfMonth)))) + 1;
-}
-public static function addDaysToTime($day, $time)
-{
-    $currentTime = $time;
-    //The amount of hours that you want to add.
-    $daysToAdd = $day;
-    //Convert the hours into seconds.
-    $secondsToAdd = $daysToAdd * (24 * 60 * 60);
-    //Add the seconds onto the current Unix timestamp.
-    $newTime = $currentTime + $secondsToAdd;
-    return $newTime;
-}
-
-public static function getthe24Time($time)
+function getthe24Time($time)
 {
     $data = $time;
     $date = date('H:i', $data);
     return $date;
 }
- public static function gettheTimeAndDate($time)
+function roundToTheNearestAnything($value, $roundTo)
 {
-    $data = $time;
-    $date = date("d/M/Y h:ia", $data);
-    return $date;
+    $value = floor($value);
+    $mod = $value % $roundTo;
+    return $value + ($mod < ($roundTo / 2) ? -$mod : $roundTo - $mod);
 }
- public static function gettheTime($time)
-{
-    $data = $time;
-    $date = date('h:i A', $data);
-    return $date;
-}
-
- public static function getTotalDaysdifferent($dtimes)
-{
-    $datediff = $dtimes - strtotime(date("Y-m-d"));
-    $differencedays = floor($datediff / (60 * 60 * 24));
-    //0today,-1 =yesterday, -2= 3 days ago
-    return $differencedays;
-}
-  public static function convertTime($time)
-{
-    $data = $time;
-    $date = strtotime($data);
-    return $date;
-}
-
-}
-  class StringAll{
-
-    public static function isStringHasEmojis($string)
+function isStringHasEmojis($string)
 {
     $emojis_regex =
         '/[\x{0080}-\x{02AF}'
@@ -327,45 +225,7 @@ public static function getthe24Time($time)
     preg_match($emojis_regex, $string, $matches);
     return !empty($matches);
 }
-   public static function reduce($text)
-{
-    $reduce = substr($text, 0, 100);
-    $reduce = substr($reduce, 0, strrpos($reduce, " "));
-    return $reduce . '...';
-}
-
-    public static function cleantextseo($text)
-{
-    $text = html_entity_decode($text);
-    $text = strip_tags($text);
-    $text = str_replace("\\r\\n", "", $text);
-    $text = str_replace("\\", "", $text);
-    $text = str_replace("&nbsp;", '', $text);
-    return $text;
-}
-    public static function generate_string($input, $strength)
-{
-    $input_length = strlen($input);
-    $random_string = '';
-    for ($i = 0; $i < $strength; $i++) {
-        $random_character = $input[mt_rand(0, $input_length - 1)];
-        $random_string .= $random_character;
-    }
-    return $random_string;
-}
-   public static function reducesm($text)
-{
-    $reduce = substr($text, 0, 150);
-    $reduce = substr($reduce, 0, strrpos($reduce, "@"));
-    return $reduce . '...';
-}
-   public static function reducesmspace($text)
-{
-    $reduce = substr($text, 0, 150);
-    $reduce = substr($reduce, 0, strrpos($reduce, " "));
-    return $reduce . '...';
-}
-   public static function thousandsCurrencyFormat($num)
+function thousandsCurrencyFormat($num)
 {
     if ($num > 1000) {
         $x = round($num);
@@ -380,7 +240,39 @@ public static function getthe24Time($time)
     }
     return $num;
 }
-   public static function truncate_number($number, $precision = 2)
+function addDaysToTime($day, $time)
+{
+    $currentTime = $time;
+    //The amount of hours that you want to add.
+    $daysToAdd = $day;
+    //Convert the hours into seconds.
+    $secondsToAdd = $daysToAdd * (24 * 60 * 60);
+    //Add the seconds onto the current Unix timestamp.
+    $newTime = $currentTime + $secondsToAdd;
+    return $newTime;
+}
+function reduce($text)
+{
+    $reduce = substr($text, 0, 100);
+    $reduce = substr($reduce, 0, strrpos($reduce, " "));
+    return $reduce . '...';
+}
+function gettheTimeAndDate($time)
+{
+    $data = $time;
+    $date = date("d/M/Y h:ia", $data);
+    return $date;
+}
+function cleantextseo($text)
+{
+    $text = html_entity_decode($text);
+    $text = strip_tags($text);
+    $text = str_replace("\\r\\n", "", $text);
+    $text = str_replace("\\", "", $text);
+    $text = str_replace("&nbsp;", '', $text);
+    return $text;
+}
+function truncate_number($number, $precision = 2)
 {
     // Zero causes issues, and no need to truncate
     if (0 == (int) $number) {
@@ -396,17 +288,130 @@ public static function getthe24Time($time)
     // returns correctly negative / positive
     return floor($number * $precision) / $precision * $negative;
 }
-   public static 
-
-function roundToTheNearestAnything($value, $roundTo)
+function gettheTime($time)
 {
-    $value = floor($value);
-    $mod = $value % $roundTo;
-    return $value + ($mod < ($roundTo / 2) ? -$mod : $roundTo - $mod);
+    $data = $time;
+    $date = date('h:i A', $data);
+    return $date;
 }
+function generate_string($input, $strength)
+{
+    $input_length = strlen($input);
+    $random_string = '';
+    for ($i = 0; $i < $strength; $i++) {
+        $random_character = $input[mt_rand(0, $input_length - 1)];
+        $random_string .= $random_character;
+    }
+    return $random_string;
 }
-class Telegram{
-    public static 
+function reducesm($text)
+{
+    $reduce = substr($text, 0, 150);
+    $reduce = substr($reduce, 0, strrpos($reduce, "@"));
+    return $reduce . '...';
+}
+function reducesmspace($text)
+{
+    $reduce = substr($text, 0, 150);
+    $reduce = substr($reduce, 0, strrpos($reduce, " "));
+    return $reduce . '...';
+}
+function deleteinFolder($name, $dir)
+{
+    $data = $name;
+    $dir = $dir;
+    $dirHandle = opendir($dir);
+    while ($file = readdir($dirHandle)) {
+        if ($file == $data) {
+            unlink($dir . "/" . $file);
+        }
+    }
+    closedir($dirHandle);
+}
+function convertTime($time)
+{
+    $data = $time;
+    $date = strtotime($data);
+    return $date;
+}
+function validatePassword($password)
+{
+    $uppercase = preg_match('@[A-Z]@', $password);
+    $lowercase = preg_match('@[a-z]@', $password);
+    $number = preg_match('@[0-9]@', $password);
+    $specialChars = preg_match('@[^\w]@', $password);
+    if (!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 6) {
+        return false;
+    } else {
+        return true;
+    }
+}
+function getIPAddress()
+{
+    $ipaddress = '';
+    if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+    } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else if (isset($_SERVER['HTTP_X_FORWARDED'])) {
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+    } else if (isset($_SERVER['HTTP_FORWARDED_FOR'])) {
+        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+    } else if (isset($_SERVER['HTTP_FORWARDED'])) {
+        $ipaddress = $_SERVER['HTTP_FORWARDED'];
+    } else if (isset($_SERVER['REMOTE_ADDR'])) {
+        $ipaddress = $_SERVER['REMOTE_ADDR'];
+    } else {
+        $ipaddress = 'UNKNOWN';
+    }
+    return $ipaddress;
+}
+function Password_encrypt($user_pass)
+{
+    $BlowFish_Format = "$2y$10$";
+    $salt_len = 24;
+    $salt = Get_Salt($salt_len);
+    $the_format = $BlowFish_Format . $salt;
+    $hash_pass = crypt($user_pass, $the_format);
+    return $hash_pass;
+}
+function Get_Salt($size)
+{
+    $Random_string = md5(uniqid(mt_rand(), true));
+    $Base64_String = base64_encode($Random_string);
+    $change_string = str_replace('+', '.', $Base64_String);
+    $salt = substr($change_string, 0, $size);
+    return $salt;
+}
+function check_pass($pass, $storedPass)
+{
+    $Hash = crypt($pass, $storedPass);
+    if ($Hash === $storedPass) {
+        return (true);
+    } else {
+        return (false);
+    }
+}
+function getIp()
+{
+    $ipaddress = '';
+    if (getenv('HTTP_CLIENT_IP')) {
+        $ipaddress = getenv('HTTP_CLIENT_IP');
+    } elseif (getenv('HTTP_X_FORWARDED_FOR')) {
+        $ipaddress = getenv('HTTP_X_FORWARDED_FOR');
+    } elseif (getenv('HTTP_X_FORWARDED')) {
+        $ipaddress = getenv('HTTP_X_FORWARDED');
+    } elseif (getenv('HTTP_FORWARDED_FOR')) {
+        $ipaddress = getenv('HTTP_FORWARDED_FOR');
+    } elseif (getenv('HTTP_FORWARDED')) {
+        $ipaddress = getenv('HTTP_FORWARDED');
+    } elseif (getenv('REMOTE_ADDR')) {
+        $ipaddress = getenv('REMOTE_ADDR');
+    } else {
+        $ipaddress = 'UNKNOWN';
+    }
+    return $ipaddress;
+}
 function sendtelemsg($chatid, $message, $botkey)
 {
     $path = "https://api.telegram.org/bot$botkey";
@@ -429,7 +434,7 @@ function sendtelemsg($chatid, $message, $botkey)
     curl_close($curld);
     // file_get_contents($path."/sendmessage?chat_id=".$chatid."&text=$message&parse_mode=html");
 }
-   public static function replyuser($chatid, $message_id, $message, $buttonadded, $keyboard, $markdown, $botkey)
+function replyuser($chatid, $message_id, $message, $buttonadded, $keyboard, $markdown, $botkey)
 {
     if (empty($markdown) || $markdown == null) {
         $markdown = "html";
@@ -500,92 +505,46 @@ function sendtelemsg($chatid, $message, $botkey)
         }
     }
 }
-
-     public static    function system_notify_crash_handler($message,$from){
-        $botidtouse=$chatId=0;
-  
-
-
-        $errstr  = preg_replace('/[^A-Za-z0-9\-]/', ' ',$message);
-
-        $keyboard= [];
-
-        $response="@habnarm1 \n*WORK FLOW CRASH*\n\nFrom: $from\nText:$errstr";
-
-        self::replyuser($chatId, "0", $response, false, $keyboard, "markdown", $botidtouse);
-
- }
- 
-    public static function notify_crash_handler()
+function getTotalDaysdifferent($dtimes)
 {
-    //global $connect;
-    $errfile = "unknown file";
-    $errstr = "shutdown";
-    $errno = E_CORE_ERROR;
-    $errline = 0;
-    $error = error_get_last();
-    if ($error !== NULL) {
-        $adminidis = 0;
-        // https://www.php.net/manual/en/errorfunc.constants.php
-        $errno = $error["type"];
-        if ($errno == 1) {
-            $errno = "Fatal and code has stopped";
-        } else if ($errno == 2) {
-            $errno = "Warning but code did not stop";
-        }
-        $errfile = str_replace("public_html", "", $error["file"]);
-        $errline = $error["line"];
-
-        $chatId = "";
-        $botidtouse = "";
-        $keyboard = [];
-        $response = "@habnarm1 \n*CRASH NOTIFICATION*\n\nFile: $errfile\nType:$errno\nLine:$errline\nText:$errstr";
-        self::replyuser($chatId, "0", $response, true, $keyboard, "markdown", $botidtouse);
-    }
+    $datediff = $dtimes - strtotime(date("Y-m-d"));
+    $differencedays = floor($datediff / (60 * 60 * 24));
+    //0today,-1 =yesterday, -2= 3 days ago
+    return $differencedays;
 }
-
-}
-
-function getCurrentFileFullURL(){
-        $protocol = strtolower(substr($_SERVER["SERVER_PROTOCOL"],0,strpos( $_SERVER["SERVER_PROTOCOL"],'/'))).'://';
-        // Get the server name and port
-        $servername = $_SERVER['SERVER_NAME'];
-        $port = $_SERVER['SERVER_PORT'];
-        // Get the path to the current script
-        $path = $_SERVER['PHP_SELF'];
-        // Combine the above to form the full URL
-        $endpoint = $protocol . $servername . ":" . $port . $path;
-        return $endpoint;
-    }
-  
-    
-  function get_details_from_exception(Exception $e){
-        $errorMessage = sprintf(
-            "Error: %s in %s on line %d",
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine()
-        );
-        return $errorMessage;
-    }
-
-
-function deleteinFolder($name, $dir)
+function createUniqueToken($length, $tablename, $tablecolname, $tokentag, $addnumbers, $addcapitalletters, $addsmalllletters)
 {
-    $data = $name;
-    $dir = $dir;
-    $dirHandle = opendir($dir);
-    while ($file = readdir($dirHandle)) {
-        if ($file == $data) {
-            unlink($dir . "/" . $file);
+    global $connect;
+    $loopit = true;
+    $input = "";
+    if ($addnumbers) {
+        $numbers = "1234567890";
+        $input = $input . $numbers;
+    }
+    if ($addcapitalletters) {
+        $capitalletters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $input = $input . $capitalletters;
+    }
+    if ($addsmalllletters) {
+        $smallletters = "abcdefghijklmnopqrstuvwxyz";
+        $input = $input . $smallletters;
+    }
+    $strength = $length;
+    $tokenis = generate_string($input, $strength);
+    while ($loopit) {
+        // check field
+        $query = "SELECT id FROM $tablename WHERE $tablecolname = ?";
+        $stmt = $connect->prepare($query);
+        $stmt->bind_param("s", $tokenis);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $num_row = $result->num_rows;
+        if ($num_row > 0) {
+            $tokenis = generate_string($input, $strength);
+        } else {
+            $loopit = false;
         }
     }
-    closedir($dirHandle);
+    return $tokentag . $tokenis;
 }
-
-
-register_shutdown_function([Telegram::class, "notify_crash_handler"]);
-//function to redirect starts here
-
-
 ?>

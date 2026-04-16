@@ -39,7 +39,7 @@ if ($result->num_rows === 0) {
 
 $user = $result->fetch_assoc();
 
-if (!password_verify($password, $user['password']) && $password !== $user['password']) {
+if (!password_verify($password, $user['password'])) {
     respondBadRequest("Incorrect password.");
     exit;
 }

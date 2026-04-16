@@ -10,10 +10,9 @@ if (isset($_POST['title']) && isset($_POST['content'])) {
     $content      = cleanme($_POST['content']);
     $title = cleanme($_POST['title']);
     $imagePath = null;
+    $category_ids = isset($_POST['category_ids']) ? cleanme($_POST['category_ids']) : null;
 
-    
-    $datasentin=ValidateAPITokenSentIN();
-    $user_id=$datasentin->usertoken;
+    $user_id = $user->usertoken;
 
     if (input_is_invalid($title) || input_is_invalid($content)) {
         respondBadRequest("Title and content are required.");

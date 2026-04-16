@@ -9,9 +9,15 @@ $user = ValidateAPITokenSentIN();
 if (isset($_POST['comment_id'])) {
 
     $comment_id = cleanme($_POST['comment_id']);
-    
-    $datasentin=ValidateAPITokenSentIN();
-    $user_id=$datasentin->usertoken;
+
+    $user_id = $user->usertoken;
+
+    // Look up role from DB for admin check
+    $roleStmt = $connect->prepare("SELECT role FROM users WHERE id = ?");
+    $roleStmt->bind_param("i", $user_id);
+    $roleStmt->execute();
+    $roleRow = $roleStmt->get_result()->fetch_assoc();
+    $isAdmin = ($roleRow && $roleRow['role'] === 'admin');
 
     if (input_is_invalid($comment_id) || !is_numeric($comment_id)) {
         respondBadRequest("A valid comment ID is required.");
@@ -31,7 +37,7 @@ if (isset($_POST['comment_id'])) {
 
             $comment = $result->fetch_assoc();
 //this is to check if the user is the owner of the comment or an admin before allowing deletion
-            if ($comment['user_id'] != $user_id && $user->role !== 'admin'){
+            if ((int)$comment['user_id'] !== (int)$user_id && !$isAdmin){
                 respondUnauthorized("You are not authorized to delete this comment.");
             }else {
 

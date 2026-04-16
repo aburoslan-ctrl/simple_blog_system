@@ -9,8 +9,7 @@ if (isset($_POST['id'])) {
 
     $post_id = cleanme($_POST['id']);
 
-    $datasentin = ValidateAPITokenSentIN();
-    $user_id = $datasentin->usertoken;
+    $user_id = $user->usertoken;
 
     if (input_is_invalid($post_id) || !is_numeric($post_id)) {
         respondBadRequest("A valid Post ID is required.");
@@ -29,6 +28,17 @@ if (isset($_POST['id'])) {
         } else {
 
             $post = $result->fetch_assoc();
+
+            // Authorization: must be the post author or an admin
+            $roleStmt = $connect->prepare("SELECT role FROM users WHERE id = ?");
+            $roleStmt->bind_param("i", $user_id);
+            $roleStmt->execute();
+            $roleRow = $roleStmt->get_result()->fetch_assoc();
+            $isAdmin = ($roleRow && $roleRow['role'] === 'admin');
+            if ((int)$post['user_id'] !== (int)$user_id && !$isAdmin) {
+                respondForbiddenAuthorized("You are not authorized to update this post.");
+                exit;
+            }
 
             // Fetch current post data
             $getCurrent = $connect->prepare("SELECT title, content, image FROM posts WHERE id = ?");
@@ -100,12 +110,12 @@ if (isset($_POST['id'])) {
 
                     // Update categories if provided (comma-separated e.g. "1,2,3")
                     if (isset($_POST['category_ids']) && !empty($_POST['category_ids'])) {
-                        $category_ids = $_POST['category_ids'];
+                        $category_ids = cleanme($_POST['category_ids']);
 
-                        // // Remove old categories
-                        // $delCats = $connect->prepare("DELETE FROM categories WHERE post_id = ?");
-                        // $delCats->bind_param("i", $post_id);
-                        // $delCats->execute();
+                        // Remove old categories
+                        $delCats = $connect->prepare("DELETE FROM post_categories WHERE post_id = ?");
+                        $delCats->bind_param("i", $post_id);
+                        $delCats->execute();
 
                         // Assign new categories
                         $ids = array_filter(array_map('trim', explode(",", $category_ids)), 'is_numeric');
@@ -117,7 +127,7 @@ if (isset($_POST['id'])) {
                             $chk->execute();
                             if ($chk->get_result()->num_rows === 0) continue; // skip invalid
 
-                            $pc = $connect->prepare("INSERT IGNORE INTO categories (post_id, category_id) VALUES (?, ?)");
+                            $pc = $connect->prepare("INSERT IGNORE INTO post_categories (post_id, category_id) VALUES (?, ?)");
                             $pc->bind_param("ii", $post_id, $cat_id);
                             $pc->execute();
                         }

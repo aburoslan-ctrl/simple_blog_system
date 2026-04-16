@@ -9,9 +9,8 @@ if (isset($_POST['id']) && isset($_POST['comment'])) {
 
     $comment_id = cleanme($_POST['id']);
     $content    = cleanme($_POST['comment']);
-    
-    $datasentin=ValidateAPITokenSentIN();
-    $user_id=$datasentin->usertoken;
+
+    $user_id = $user->usertoken;
 
     if (input_is_invalid($comment_id) || !is_numeric($comment_id)) {
         respondBadRequest("A valid comment ID is required.");
@@ -38,8 +37,16 @@ elseif (strlen($content) > 1000) {
 
             $comment = $result->fetch_assoc();
 
-          
-             
+            // Authorization: must be the comment author or an admin
+            $roleStmt = $connect->prepare("SELECT role FROM users WHERE id = ?");
+            $roleStmt->bind_param("i", $user_id);
+            $roleStmt->execute();
+            $roleRow = $roleStmt->get_result()->fetch_assoc();
+            $isAdmin = ($roleRow && $roleRow['role'] === 'admin');
+            if ((int)$comment['user_id'] !== (int)$user_id && !$isAdmin) {
+                respondForbiddenAuthorized("You are not authorized to update this comment.");
+                exit;
+            }
 
                 $update = $connect->prepare("UPDATE comments SET comment = ? WHERE id = ?");
                 $update->bind_param("si", $content, $comment_id);

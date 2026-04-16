@@ -13,9 +13,13 @@ if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
     exit;
 }
 
-// // Admin only
-if (!isset($user_id) || $user_id !== "admin") {
-    respondUnauthorized("You are not authorized to delete posts.");
+// Admin only — look up role from DB
+$roleStmt = $connect->prepare("SELECT role FROM users WHERE id = ?");
+$roleStmt->bind_param("i", $user_id);
+$roleStmt->execute();
+$roleRow = $roleStmt->get_result()->fetch_assoc();
+if (!$roleRow || $roleRow['role'] !== 'admin') {
+    respondForbiddenAuthorized("You are not authorized to delete posts.");
     exit;
 }
 

@@ -12,6 +12,7 @@ if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
     respondUnauthorized("Unauthorized access.");
 }
 
+
 $user_id = (int)$user_id;
 
 /* PREPARE QUERY */

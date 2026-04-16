@@ -9,10 +9,8 @@ if (isset($_POST['post_id']) && isset($_POST['comment'])) {
 
     $post_id = cleanme($_POST['post_id']);
     $content = cleanme($_POST['comment']);
-    ///$user_id = cleanme($user['id']);
-    
-    $datasentin=ValidateAPITokenSentIN();
-    $user_id=$datasentin->usertoken;
+
+    $user_id = $user->usertoken;
 
     if (input_is_invalid($post_id) || !is_numeric($post_id)) {
         respondBadRequest("A valid post ID is required.");

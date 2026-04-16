@@ -6,6 +6,12 @@ include "../../../head.php";
 
 // Validate token once
 $user = ValidateAPITokenSentIN();
+$user_id = $user->usertoken;
+
+if (!isset($user_id) || input_is_invalid($user_id) || !is_numeric($user_id)) {
+    respondUnauthorized();
+    exit;
+}
 
 if (isset($_POST['id'])) {
 
@@ -37,12 +43,16 @@ if (isset($_POST['id'])) {
 
     $post = $result->fetch_assoc();
 
-    // Authorization (author or admin only)
-    // if ($post['user_id'] != $user->usertoken && $user->role != "admin") {
-    //     respondUnauthorized("You are not authorized to delete this post.");
-    //     exit;
-    // }
-
+    // Authorization: must be the post author or an admin
+    $roleStmt = $connect->prepare("SELECT role FROM users WHERE id = ?");
+    $roleStmt->bind_param("i", $user_id);
+    $roleStmt->execute();
+    $roleRow = $roleStmt->get_result()->fetch_assoc();
+    $isAdmin = ($roleRow && $roleRow['role'] === 'admin');
+    if ((int)$post['user_id'] !== (int)$user_id && !$isAdmin) {
+        respondForbiddenAuthorized("You are not authorized to delete this post.");
+        exit;
+    }
 
     $deleteComments = $connect->prepare("DELETE FROM comments WHERE post_id = ?");
     $deleteComments->bind_param("i", $post_id);
