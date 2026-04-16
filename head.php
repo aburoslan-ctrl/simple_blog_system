@@ -17,5 +17,9 @@ require_once(__DIR__ . "/vendor/autoload.php");
 include "functions.php";
 include "apifunctions.php";
 
+// Support JSON payload: if $_POST is empty, try reading JSON from request body
+if (empty($_POST)) {
+    $_POST = json_decode(file_get_contents("php://input"), true) ?? [];
+}
 
 ?>
